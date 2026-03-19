@@ -13,7 +13,6 @@ env/
 Task2/models/
 
 data/
-!Task2/data/
 
 .DS_Store
 

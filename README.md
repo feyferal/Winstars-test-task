@@ -46,7 +46,7 @@ source .venv/bin/activate        # Linux / Mac
 pip install -r requirements.txt
 ```
 
-## 📌 Task 1 — MNIST
+## Task 1 — MNIST
 
 ### Train
 ```bash

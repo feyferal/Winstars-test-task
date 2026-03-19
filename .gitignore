@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+
+.venv/
+env/
+
+*.pt
+*.pth
+*.ckpt
+Task2/models/
+
+data/
+
+.DS_Store
+
+.env

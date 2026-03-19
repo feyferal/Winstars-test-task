@@ -5,10 +5,36 @@ from collections import Counter, defaultdict
 
 import torch
 from torch import nn, optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
 from src.img.dataset import AnimalDataset
 from src.img.model import get_model
+
+
+def set_seed(seed: int = 42) -> None:
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def evaluate(model, dataloader, device):
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for images, labels in dataloader:
+            images = images.to(device)
+            labels = labels.to(device)
+
+            outputs = model(images)
+            preds = torch.argmax(outputs, dim=1)
+
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+
+    return correct / total if total > 0 else 0.0
 
 
 def train(
@@ -17,8 +43,10 @@ def train(
     batch_size: int = 64,
     lr: float = 1e-3,
     epochs: int = 7,
-    samples_per_class: int = 300,
+    seed: int = 42,
 ) -> None:
+    set_seed(seed)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     dataset = AnimalDataset(data_dir)
@@ -28,11 +56,13 @@ def train(
     for path, label in dataset.samples:
         class_samples[label].append((path, label))
 
+    min_class_size = min(len(items) for items in class_samples.values())
+    print(f"Using {min_class_size} samples per class")
+
     balanced_samples: list[tuple] = []
 
     for label, items in class_samples.items():
-        k = min(len(items), samples_per_class)
-        balanced_samples.extend(random.sample(items, k))
+        balanced_samples.extend(random.sample(items, min_class_size))
 
     dataset.samples = balanced_samples
 
@@ -40,11 +70,13 @@ def train(
     counter = Counter(labels)
     print("Class distribution:", counter)
 
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-    )
+    train_size = int(0.8 * len(dataset))
+    val_size = len(dataset) - train_size
+
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
     model = get_model(num_classes=len(dataset.classes))
     model.to(device)
@@ -56,7 +88,7 @@ def train(
         model.train()
         total_loss = 0.0
 
-        for i, (images, labels) in enumerate(dataloader):
+        for i, (images, labels) in enumerate(train_loader):
             images = images.to(device)
             labels = labels.to(device)
 
@@ -71,12 +103,26 @@ def train(
             total_loss += loss.item()
 
             if i % 20 == 0:
-                print(f"Epoch {epoch+1} | Batch {i}/{len(dataloader)}")
+                print(f"Epoch {epoch+1} | Batch {i}/{len(train_loader)}")
 
-        avg_loss = total_loss / len(dataloader)
-        print(f"Epoch {epoch+1}/{epochs} | Loss: {avg_loss:.4f}")
+        avg_loss = total_loss / len(train_loader)
 
-    torch.save(model.state_dict(), model_path)
+        val_acc = evaluate(model, val_loader, device)
+
+        print(
+            f"Epoch {epoch+1}/{epochs} | "
+            f"Loss: {avg_loss:.4f} | "
+            f"Val Acc: {val_acc:.4f}"
+        )
+
+    torch.save(
+        {
+            "model_state": model.state_dict(),
+            "class_names": dataset.classes,
+        },
+        model_path,
+    )
+
     print(f"Model saved to {model_path}")
 
 

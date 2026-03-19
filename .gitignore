@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 *.pyo
 
+.idea/
+
 .venv/
 env/
 
@@ -11,6 +13,7 @@ env/
 Task2/models/
 
 data/
+!Task2/data/
 
 .DS_Store
 

@@ -9,18 +9,20 @@ from torchvision import transforms
 from src.img.model import get_model
 from src.img.dataset import get_class_names
 
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 def predict_image(
     image_path: str | Path,
-    model_path: str = "models/img/model.pth",
-    data_dir: str = "data/cv/raw",
+    model_path: str | Path = BASE_DIR / "models/img/model.pth",
+    data_dir: str | Path = BASE_DIR / "data/cv/raw",
 ) -> str:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     class_names = get_class_names(data_dir)
 
     model = get_model(num_classes=len(class_names))
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
     model.to(device)
     model.eval()
 

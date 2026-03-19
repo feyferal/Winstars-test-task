@@ -48,44 +48,24 @@ pip install -r requirements.txt
 
 ## Task 1 — MNIST
 
-### Train
+### Train+Evaluate
 ```bash
-python -m Task1.mnist_model.train \
+python -m Task1.mnist.main \
+  --algo cnn \
   --epochs 5 \
-  --batch_size 64 \
-  --lr 0.001 \
-  --device cpu
 ```
-
-### Inference
-```bash
-python -m Task1.mnist_model.infer \
-  --image path/to/image.png \
-  --model models/mnist.pth
-```
-
----
 
 ## Task 2 — NER + CV Pipeline
 
 ### Train NER
 ```bash
 python -m Task2.src.ner.train \
-  --model_name bert-base-cased \
-  --epochs 3 \
-  --batch_size 16 \
-  --lr 2e-5 \
-  --device cpu
 ```
 
 ### Train CV
 ```bash
 python -m Task2.src.img.train \
-  --model resnet18 \
   --epochs 10 \
-  --batch_size 32 \
-  --lr 0.0003 \
-  --device cpu
 ```
 
 ---
@@ -96,7 +76,4 @@ python -m Task2.src.img.train \
 python -m Task2.src.pipeline \
   --text "It is a horse" \
   --image path/to/image.jpg \
-  --ner_model models/ner \
-  --cv_model models/cv.pth \
-  --device cpu
 ```

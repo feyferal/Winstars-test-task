@@ -94,7 +94,7 @@ python -m Task2.src.img.train \
 
 ```bash
 python -m Task2.src.pipeline \
-  --text "A dog is running in the park" \
+  --text "It is a horse" \
   --image path/to/image.jpg \
   --ner_model models/ner \
   --cv_model models/cv.pth \
